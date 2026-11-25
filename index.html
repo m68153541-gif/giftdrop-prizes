@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GiftDrop — ссылки на призы для розыгрыша</title>
+<meta name="description" content="Панель менеджера и страница получения приза: персональные ссылки для победителей розыгрыша, подтверждение получения и реестр статусов.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23080d18'/%3E%3Cpath d='M16 7l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L7.3 13.4l6.1-.8z' fill='%23e9bc63'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --ink:#080d18;
+    --panel:#111a2d;
+    --panel-2:#16203a;
+    --line:rgba(255,255,255,.09);
+    --line-soft:rgba(255,255,255,.05);
+    --text:#e9eef9;
+    --muted:#93a1bb;
+    --gold:#e9bc63;
+    --gold-2:#c9952f;
+    --mint:#48d597;
+    --danger:#f2707a;
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 520px at 10% -10%, rgba(233,188,99,.14), transparent 62%),
+      radial-gradient(760px 440px at 96% 2%, rgba(72,213,151,.07), transparent 62%),
+      var(--ink);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  .wrap{max-width:620px;margin:0 auto;padding:26px 20px 64px}
+  .wrap.wide{max-width:1040px}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:40px}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.01em;font-size:17px}
+  .logo .dot{width:9px;height:9px;border-radius:3px;background:var(--gold);box-shadow:0 0 0 4px rgba(233,188,99,.14)}
+  .ghost-link{color:var(--muted);text-decoration:none;font-size:14px;border-bottom:1px solid transparent;padding-bottom:2px;transition:color .15s,border-color .15s}
+  .ghost-link:hover{color:var(--text);border-color:var(--line)}
+
+  .kicker{margin:0 0 14px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  h1{font-size:clamp(30px,6vw,46px);line-height:1.08;letter-spacing:-.03em;margin:0 0 18px;font-weight:700}
+  h2{font-size:18px;letter-spacing:-.01em;margin:0;font-weight:650}
+  .lead{margin:0 0 28px;color:var(--muted);font-size:17px;max-width:52ch}
+  .page-title{font-size:clamp(26px,4vw,34px);margin:0 0 8px;letter-spacing:-.025em;font-weight:700}
+  .page-sub{margin:0 0 24px;color:var(--muted);max-width:60ch}
+
+  .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:44px}
+  .facts{list-style:none;margin:0;padding:22px 0 0;border-top:1px solid var(--line-soft);display:grid;gap:18px}
+  .facts li{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:baseline}
+  .facts strong{color:var(--gold);font-size:19px;letter-spacing:-.02em}
+  .facts span{color:var(--muted);font-size:14.5px}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 20px;border-radius:12px;border:1px solid transparent;
+    font:inherit;font-weight:650;font-size:15px;cursor:pointer;text-decoration:none;
+    transition:transform .12s ease,background .15s,border-color .15s,color .15s;
+    background:var(--panel-2);color:var(--text);border-color:var(--line);
+  }
+  .btn:hover{background:#1c2743}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:linear-gradient(180deg,#f0c977,#dfab4a);color:#231703;border-color:transparent;box-shadow:0 8px 24px -10px rgba(233,188,99,.7)}
+  .btn.primary:hover{background:linear-gradient(180deg,#f6d489,#e6b455)}
+  .btn.small{padding:8px 13px;font-size:13.5px;border-radius:10px}
+  .btn.danger{color:var(--danger);border-color:rgba(242,112,122,.28);background:transparent}
+  .btn.danger:hover{background:rgba(242,112,122,.1)}
+  .btn:focus-visible,.ghost-link:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{
+    outline:2px solid var(--gold);outline-offset:2px
+  }
+
+  /* ticket */
+  .ticket{
+    position:relative;background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:30px 28px;box-shadow:0 30px 60px -34px rgba(0,0,0,.9);
+  }
+  .ticket-top h1{font-size:clamp(26px,5.4vw,34px);margin:0 0 8px}
+  .ticket-top .who{margin:0;color:var(--muted);font-size:15px}
+  .ticket-top .who b{color:var(--text);font-weight:600}
+  .perf{position:relative;height:1px;border-top:1px dashed rgba(255,255,255,.17);margin:26px -28px}
+  .perf::before,.perf::after{
+    content:"";position:absolute;top:-13px;width:26px;height:26px;border-radius:50%;
+    background:var(--ink);border:1px solid var(--line);
+  }
+  .perf::before{left:-13px}
+  .perf::after{right:-13px}
+  .ticket-body{font-size:15px}
+  .ticket-foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--line-soft);color:var(--muted);font-size:12.5px;line-height:1.5}
+
+  .steps{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:12px}
+  .steps li{display:grid;grid-template-columns:24px 1fr;gap:12px;color:var(--muted);font-size:14.5px}
+  .steps .n{
+    width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(233,188,99,.12);color:var(--gold);font-size:12px;font-weight:700;
+  }
+  .steps b{color:var(--text);font-weight:600}
+
+  .success-mark{
+    width:56px;height:56px;border-radius:50%;display:grid;place-items:center;margin-bottom:18px;
+    background:rgba(72,213,151,.13);color:var(--mint);font-size:26px;
+  }
+  .code-box{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin:20px 0 16px;
+  }
+  .code-box .label{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .code{font-family:ui-monospace,"SF Mono",Consolas,monospace;font-size:23px;letter-spacing:.06em;color:var(--gold)}
+
+  .muted{color:var(--muted)}
+  .small{font-size:13.5px}
+  .mono{font-family:ui-monospace,"SF Mono",Consolas,monospace}
+
+  /* overlay */
+  .overlay{
+    position:fixed;inset:0;display:grid;place-items:center;padding:20px;
+    background:rgba(4,8,16,.74);backdrop-filter:blur(6px);z-index:40;
+    animation:fade .16s ease-out;
+  }
+  .modal{
+    width:100%;max-width:400px;background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:18px;padding:26px;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.95);
+    animation:pop .18s ease-out;
+  }
+  .modal h2{font-size:21px;margin:0 0 6px}
+  .modal .rows{display:grid;gap:10px;margin:18px 0 24px;font-size:14.5px}
+  .modal .rows div{display:flex;justify-content:space-between;gap:14px;padding-bottom:10px;border-bottom:1px solid var(--line-soft)}
+  .modal .rows span:first-child{color:var(--muted)}
+  .modal .rows span:last-child{text-align:right;font-weight:600}
+  .modal .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+
+  /* admin */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .kpi b{display:block;font-size:24px;letter-spacing:-.02em;font-weight:700}
+  .kpi span{font-size:12.5px;color:var(--muted)}
+  .kpi.gold b{color:var(--gold)}
+  .kpi.mint b{color:var(--mint)}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:18px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{display:block;margin-bottom:14px}
+  .field span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:500}
+  input[type=text],select{
+    width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:11px;
+    padding:11px 13px;color:var(--text);font:inherit;font-size:15px;
+  }
+  input[type=text]::placeholder{color:#5f6c85}
+  input[type=text]:focus,select:focus{background:rgba(0,0,0,.35)}
+  .form-error{color:var(--danger);font-size:13.5px;margin:0 0 14px}
+
+  .result{margin-top:18px;padding:16px;border-radius:14px;background:rgba(233,188,99,.07);border:1px solid rgba(233,188,99,.28)}
+  .result p{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+  .linkline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .linkline input{flex:1;min-width:200px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+
+  .table-scroll{overflow-x:auto;margin:0 -22px;padding:0 22px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 12px 10px;white-space:nowrap}
+  td{padding:13px 12px;border-top:1px solid var(--line-soft);vertical-align:middle}
+  tr.fresh td{background:rgba(233,188,99,.06)}
+  td.user{font-weight:600;white-space:nowrap}
+  td.prize small{display:block;color:var(--muted);font-size:12px}
+  td.prize{min-width:132px}
+  td.mono{white-space:nowrap}
+  td.when{color:var(--muted);font-size:12.5px;white-space:nowrap}
+  td.actions{white-space:nowrap;text-align:right}
+  td.actions .btn{padding:6px 9px;font-size:12.5px;margin-left:4px}
+
+  .pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+  .pill.wait{background:rgba(147,161,187,.13);color:#a8b6cf}
+  .pill.open{background:rgba(72,213,151,.12);color:var(--mint)}
+  .pill.claim{background:rgba(233,188,99,.15);color:var(--gold)}
+  .pill.issued{background:rgba(120,140,255,.15);color:#9aa8ff}
+
+  .empty{text-align:center;padding:34px 16px;color:var(--muted);font-size:14.5px}
+  .empty strong{display:block;color:var(--text);font-size:16px;margin-bottom:4px;font-weight:600}
+
+  .note{font-size:12.5px;color:#6f7d96;line-height:1.6;margin:22px 0 0}
+  .note b{color:#93a1bb;font-weight:600}
+
+  .err-card{background:var(--panel);border:1px solid rgba(242,112,122,.35);border-radius:var(--radius);padding:28px}
+  .err-card h1{font-size:26px;margin:0 0 10px}
+  .err-card p{margin:0;color:var(--muted)}
+
+  @media (max-width:720px){
+    .kpis{grid-template-columns:1fr 1fr}
+    .grid2{grid-template-columns:1fr}
+  }
+  @media (max-width:640px){
+    .table-scroll{margin:0;padding:0;overflow:visible}
+    table,thead,tbody,tr,td{display:block;width:100%}
+    thead{display:none}
+    tbody tr{border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:10px;background:rgba(0,0,0,.18)}
+    tr.fresh{border-color:rgba(233,188,99,.4)}
+    td{border:0;padding:5px 0}
+    td::before{content:attr(data-label);display:block;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+    td.actions{text-align:left;padding:12px 0 0;margin-top:8px;border-top:1px solid var(--line-soft)}
+    td.actions::before{content:none}
+    td.actions .btn{margin:0 6px 0 0}
+    td.actions .btn.danger{margin:0}
+  }
+  @media (max-width:520px){
+    .wrap{padding:20px 16px 48px}
+    .ticket{padding:24px 20px}
+    .perf{margin:22px -20px}
+    .facts li{grid-template-columns:1fr;gap:2px}
+    .modal .actions{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
+  }
+</style>
+</head>
+<body>
+<main class="wrap" id="app" aria-live="polite"></main>
+<noscript>
+  <p style="padding:24px;color:#e9eef9">Для работы страницы нужен JavaScript.</p>
+</noscript>
+<script>
+(function(){
+  "use strict";
+
+  var LS_KEY = "giftdrop.records.v1";
+  var SALT = "giftdrop::2026-11";
+  var ALPHA = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  var app = document.getElementById("app");
+
+  var db = [];
+  var storageOk = true;
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    db = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(db)) db = [];
+  } catch (e) {
+    db = [];
+    storageOk = false;
+  }
+
+  var freshId = null;
+
+  function persist() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(db));
+      storageOk = true;
+    } catch (e) {
+      storageOk = false;
+    }
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function hash32(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function b64url(str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function unb64url(s) {
+    var b = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (b.length % 4) b += "=";
+    var bin = atob(b);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function makeToken(user, prize, kind) {
+    var json = JSON.stringify({ u: user, p: prize, k: kind, v: 1 });
+    return b64url(json) + "." + hash32(json).toString(36);
+  }
+
+  function parseToken(token) {
+    if (!token) return null;
+    var parts = String(token).split(".");
+    if (parts.length !== 2) return null;
+    try {
+      var json = unb64url(parts[0]);
+      if (hash32(json).toString(36) !== parts[1]) return null;
+      var d = JSON.parse(json);
+      if (!d || typeof d.u !== "string" || typeof d.p !== "string") return null;
+      return d;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function codeFromToken(token) {
+    var h = hash32(SALT + "|" + token);
+    var out = "";
+    for (var i = 0; i < 5; i++) {
+      out += ALPHA.charAt(h % 32);
+      h = (Math.floor(h / 32) ^ hash32(out + token)) >>> 0;
+    }
+    return "GD-" + out;
+  }
+
+  function giftLink(token) {
+    return location.href.split("#")[0] + "#/gift/" + token;
+  }
+
+  function fmtDate(ts) {
+    if (!ts) return "—";
+    var d = new Date(ts);
+    var p = function(n){ return n < 10 ? "0" + n : String(n); };
+    return p(d.getDate()) + "." + p(d.getMonth() + 1) + "." + d.getFullYear() + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function fmtShort(ts) {
+    if (!ts) return "—";
+    var d = new Date(ts);
+    var p = function(n){ return n < 10 ? "0" + n : String(n); };
+    return p(d.getDate()) + "." + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function kindLabel(k) {
+    return { gift: "Подарок", nft: "NFT", stars: "Звёзды", other: "Другое" }[k] || "Подарок";
+  }
+
+  function statusOf(r) {
+    if (r.issuedAt) return { key: "issued", label: "Выдан" };
+    if (r.claimedAt) return { key: "claim", label: "Подтверждён" };
+    if (r.openedAt) return { key: "open", label: "Открыт" };
+    return { key: "wait", label: "Ожидает" };
+  }
+
+  function cleanUser(v) {
+    return String(v || "").trim().replace(/^@+/, "").replace(/\s+/g, "");
+  }
+
+  function copyText(text, done) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      done(!!ok);
+    } catch (e) {
+      done(false);
+    }
+  }
+
+  function toast(btn, ok) {
+    var old = btn.textContent;
+    btn.textContent = ok ? "Скопировано" : "Не удалось";
+    setTimeout(function(){ btn.textContent = old; }, 1500);
+  }
+
+  /* ---------------- landing ---------------- */
+
+  function renderLanding() {
+    app.className = "wrap";
+    app.innerHTML =
+      '<header class="topbar">' +
+        '<div class="logo"><span class="dot"></span>GiftDrop</div>' +
+        '<a class="ghost-link" href="#/admin">Панель менеджера</a>' +
+      '</header>' +
+      '<section class="hero">' +
+        '<p class="kicker">Розыгрыши в Telegram</p>' +
+        '<h1>Ссылка на приз<br>для каждого победителя</h1>' +
+        '<p class="lead">Менеджер создаёт приз и получает персональную ссылку. Победитель открывает её, подтверждает получение — вы видите, кто уже забрал приз и по какому коду.</p>' +
+        '<div class="hero-actions">' +
+          '<a class="btn primary" href="#/admin">Создать ссылку на приз</a>' +
+        '</div>' +
+        '<ul class="facts">' +
+          '<li><strong>0 ₽</strong><span>Победитель ничего не переводит и не оплачивает: приз отправляет организатор</span></li>' +
+          '<li><strong>2 шага</strong><span>«Получить подарок» → «Подтвердить получение»</span></li>' +
+          '<li><strong>1 код</strong><span>Номер заявки, который победитель присылает менеджеру для отзыва</span></li>' +
+        '</ul>' +
+      '</section>';
+  }
+
+  /* ---------------- gift page ---------------- */
+
+  function ensureRecord(token, data) {
+    var rec = null;
+    for (var i = 0; i < db.length; i++) if (db[i].token === token) rec = db[i];
+    if (!rec) {
+      rec = {
+        id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        token: token,
+        user: data.u,
+        prize: data.p,
+        kind: data.k || "gift",
+        createdAt: Date.now(),
+        openedAt: null,
+        claimedAt: null,
+        issuedAt: null,
+        code: codeFromToken(token)
+      };
+      db.push(rec);
+      persist();
+    }
+    if (!rec.openedAt) {
+      rec.openedAt = Date.now();
+      persist();
+    }
+    return rec;
+  }
+
+  function renderGift(token) {
+    var data = parseToken(token);
+    app.className = "wrap";
+    if (!data) {
+      app.innerHTML =
+        '<header class="topbar"><div class="logo"><span class="dot"></span>GiftDrop</div>' +
+        '<a class="ghost-link" href="#">На главную</a></header>' +
+        '<div class="err-card"><h1>Ссылка недействительна</h1>' +
+        '<p>Проверьте адрес: возможно, ссылку скопировали не полностью. Попросите менеджера отправить её заново.</p></div>';
+      return;
+    }
+
+    var rec = ensureRecord(token, data);
+    var claimed = !!rec.claimedAt;
+
+    var body = claimed
+      ? '<div class="success-mark" aria-hidden="true">✓</div>' +
+        '<h2 style="font-size:22px;margin:0 0 6px">Заявка принята</h2>' +
+        '<p class="muted small" style="margin:0 0 4px">Получение подтверждено ' + esc(fmtDate(rec.claimedAt)) + '.</p>' +
+        '<div class="code-box"><div><span class="label">Номер заявки</span>' +
+          '<span class="code">' + esc(rec.code) + '</span></div>' +
+          '<button class="btn small" id="copyCode" type="button">Копировать</button></div>' +
+        '<p class="small" style="margin:0 0 6px">Отправьте этот номер менеджеру — по нему он выдаст приз и возьмёт отзыв.</p>' +
+        '<p class="muted small" style="margin:0">Приз отправляется на <b>@' + esc(rec.user) + '</b> через Fragment. Статус выдачи: ' +
+          (rec.issuedAt ? '<b style="color:var(--mint)">выдан ' + esc(fmtDate(rec.issuedAt)) + '</b>' : 'ожидает выдачи') + '.</p>'
+      : '<p class="muted" style="margin:0 0 20px">Менеджер добавил вас в список победителей. Подтвердите получение — после этого мы покажем номер заявки для отзыва.</p>' +
+        '<ol class="steps">' +
+          '<li><span class="n">1</span><span><b>Нажмите «Получить подарок»</b><br>Откроется окно подтверждения.</span></li>' +
+          '<li><span class="n">2</span><span><b>Подтвердите получение</b><br>Мы зафиксируем заявку и присвоим номер.</span></li>' +
+          '<li><span class="n">3</span><span><b>Отправьте номер менеджеру</b><br>Он выдаст приз через Fragment.</span></li>' +
+        '</ol>' +
+        '<button class="btn primary" id="claimBtn" type="button" style="width:100%">Получить подарок</button>';
+
+    app.innerHTML =
+      '<header class="topbar">' +
+        '<div class="logo"><span class="dot"></span>GiftDrop</div>' +
+        '<span class="ghost-link" style="cursor:default">Розыгрыш в Telegram</span>' +
+      '</header>' +
+      '<section class="ticket">' +
+        '<div class="ticket-top">' +
+          '<p class="kicker" style="margin-bottom:10px">Ваш приз</p>' +
+          '<h1>' + esc(rec.prize) + '</h1>' +
+          '<p class="who">Победитель: <b>@' + esc(rec.user) + '</b> · ' + esc(kindLabel(rec.kind)) + '</p>' +
+        '</div>' +
+        '<div class="perf" aria-hidden="true"></div>' +
+        '<div class="ticket-body">' + body + '</div>' +
+        '<div class="ticket-foot">Получение бесплатное. Переводы, оплата и пересылка звёзд не требуются — приз отправляет организатор розыгрыша.</div>' +
+      '</section>';
+
+    var claimBtn = document.getElementById("claimBtn");
+    if (claimBtn) claimBtn.addEventListener("click", function(){ openConfirm(rec); });
+
+    var copyCode = document.getElementById("copyCode");
+    if (copyCode) copyCode.addEventListener("click", function(){
+      copyText(rec.code, function(ok){ toast(copyCode, ok); });
+    });
+  }
+
+  function openConfirm(rec) {
+    var overlay = document.createElement("div");
+    overlay.className = "overlay";
+    overlay.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">' +
+        '<h2 id="mTitle">Подтвердите получение подарка</h2>' +
+        '<p class="muted small" style="margin:0">Проверьте данные. После подтверждения заявка будет зафиксирована.</p>' +
+        '<div class="rows">' +
+          '<div><span>Приз</span><span>' + esc(rec.prize) + '</span></div>' +
+          '<div><span>Получатель</span><span>@' + esc(rec.user) + '</span></div>' +
+          '<div><span>Стоимость для вас</span><span>бесплатно</span></div>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn" id="mCancel" type="button">Отмена</button>' +
+          '<button class="btn primary" id="mOk" type="button">Подтвердить</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    var okBtn = overlay.querySelector("#mOk");
+    var cancelBtn = overlay.querySelector("#mCancel");
+    okBtn.focus();
+
+    function close() {
+      overlay.remove();
+      document.removeEventListener("keydown", onKey);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") close();
+      if (e.key === "Tab") {
+        var f = [okBtn, cancelBtn];
+        var i = f.indexOf(document.activeElement);
+        e.preventDefault();
+        f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    cancelBtn.addEventListener("click", close);
+    overlay.addEventListener("click", function(e){ if (e.target === overlay) close(); });
+    okBtn.addEventListener("click", function(){
+      rec.claimedAt = Date.now();
+      persist();
+      close();
+      renderGift(rec.token);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  /* ---------------- admin ---------------- */
+
+  function renderAdmin() {
+    app.className = "wrap wide";
+    app.innerHTML =
+      '<header class="topbar">' +
+        '<div class="logo"><span class="dot"></span>GiftDrop</div>' +
+        '<a class="ghost-link" href="#">На главную</a>' +
+      '</header>' +
+      '<h1 class="page-title">Панель менеджера</h1>' +
+      '<p class="page-sub">Создайте приз, отправьте персональную ссылку победителю и отмечайте выдачу. Реестр ведётся в этом браузере.</p>' +
+      '<div class="kpis" id="kpis"></div>' +
+      '<section class="card">' +
+        '<div class="card-head"><h2>Новый приз</h2></div>' +
+        '<form id="prizeForm" novalidate>' +
+          '<div class="grid2">' +
+            '<label class="field"><span>Юзернейм победителя</span>' +
+              '<input type="text" id="fUser" placeholder="@nickname" autocomplete="off" spellcheck="false" maxlength="33"></label>' +
+            '<label class="field"><span>Название приза</span>' +
+              '<input type="text" id="fPrize" placeholder="Gift «Heart», NFT #1240, 100 звёзд" autocomplete="off" maxlength="60"></label>' +
+          '</div>' +
+          '<label class="field" style="max-width:280px"><span>Тип приза</span>' +
+            '<select id="fKind">' +
+              '<option value="gift">Подарок</option>' +
+              '<option value="nft">NFT</option>' +
+              '<option value="stars">Звёзды</option>' +
+              '<option value="other">Другое</option>' +
+            '</select></label>' +
+          '<p class="form-error" id="formError" role="alert" hidden></p>' +
+          '<button class="btn primary" type="submit">Сгенерировать ссылку</button>' +
+        '</form>' +
+        '<div class="result" id="resultBox" hidden></div>' +
+      '</section>' +
+      '<section class="card">' +
+        '<div class="card-head">' +
+          '<h2>Реестр призов</h2>' +
+          '<div class="tools">' +
+            '<input type="text" id="search" placeholder="Поиск по нику" aria-label="Поиск по нику или призу" autocomplete="off" style="max-width:200px">' +
+            '<button class="btn small" id="exportBtn" type="button">Экспорт CSV</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="tableBox"></div>' +
+      '</section>' +
+      '<p class="note">' +
+        '<b>Про учёт:</b> отметки хранятся в браузере, где открыта панель. Если победитель открыл ссылку на своём телефоне, его подтверждение сюда само не придёт — он присылает номер заявки, и вы отмечаете «Выдан». Сквозной учёт без участия менеджера требует сервера (Telegram-бот или небольшой API).<br>' +
+        '<b>Про Telegram:</b> проверка юзернейма через Telegram Login включается только при размещении сайта на домене с HTTPS и подключённом боте — в локальном файле она недоступна.' +
+      '</p>';
+
+    document.getElementById("prizeForm").addEventListener("submit", onSubmit);
+    document.getElementById("search").addEventListener("input", renderTable);
+    document.getElementById("exportBtn").addEventListener("click", exportCsv);
+    document.getElementById("tableBox").addEventListener("click", onTableClick);
+
+    renderKpis();
+    renderTable();
+    if (freshId) {
+      var fresh = document.getElementById("freshResult");
+      if (fresh) fresh.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function onSubmit(e) {
+    e.preventDefault();
+    var user = cleanUser(document.getElementById("fUser").value);
+    var prize = String(document.getElementById("fPrize").value || "").trim();
+    var kind = document.getElementById("fKind").value;
+    var err = document.getElementById("formError");
+
+    if (!/^[A-Za-z0-9_]{3,32}$/.test(user)) {
+      err.textContent = "Юзернейм: 3–32 символа, латиница, цифры и подчёркивание (без @ и пробелов).";
+      err.hidden = false;
+      document.getElementById("fUser").focus();
+      return;
+    }
+    if (prize.length < 2) {
+      err.textContent = "Укажите название приза — его увидит победитель.";
+      err.hidden = false;
+      document.getElementById("fPrize").focus();
+      return;
+    }
+    err.hidden = true;
+
+    var token = makeToken(user, prize, kind);
+    var rec = {
+      id: "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      token: token,
+      user: user,
+      prize: prize,
+      kind: kind,
+      createdAt: Date.now(),
+      openedAt: null,
+      claimedAt: null,
+      issuedAt: null,
+      code: codeFromToken(token)
+    };
+    db.unshift(rec);
+    persist();
+    freshId = rec.id;
+
+    document.getElementById("fUser").value = "";
+    document.getElementById("fPrize").value = "";
+
+    var box = document.getElementById("resultBox");
+    box.hidden = false;
+    box.id = "resultBox";
+    box.innerHTML =
+      '<p><b style="color:var(--text)">Ссылка для @' + esc(user) + '</b> — отправьте её победителю.</p>' +
+      '<div class="linkline">' +
+        '<input type="text" readonly value="' + esc(giftLink(token)) + '" aria-label="Ссылка на приз">' +
+        '<button class="btn small" type="button" id="copyLink">Копировать</button>' +
+        '<a class="btn small" href="#/gift/' + esc(token) + '" target="_blank" rel="noopener">Открыть</a>' +
+      '</div>';
+
+    document.getElementById("copyLink").addEventListener("click", function(){
+      var input = box.querySelector("input");
+      var btn = this;
+      copyText(input.value, function(ok){
+        toast(btn, ok);
+        if (!ok) { input.select(); }
+      });
+    });
+
+    document.getElementById("fUser").focus();
+    renderKpis();
+    renderTable();
+  }
+
+  function renderKpis() {
+    var opened = 0, claimed = 0, issued = 0;
+    db.forEach(function(r){
+      if (r.openedAt) opened++;
+      if (r.claimedAt) claimed++;
+      if (r.issuedAt) issued++;
+    });
+    document.getElementById("kpis").innerHTML =
+      '<div class="kpi"><b>' + db.length + '</b><span>Всего ссылок</span></div>' +
+      '<div class="kpi"><b>' + opened + '</b><span>Открыли</span></div>' +
+      '<div class="kpi gold"><b>' + claimed + '</b><span>Подтвердили</span></div>' +
+      '<div class="kpi mint"><b>' + issued + '</b><span>Выдано</span></div>';
+  }
+
+  function renderTable() {
+    var box = document.getElementById("tableBox");
+    if (!box) return;
+    var q = String((document.getElementById("search") || {}).value || "").trim().toLowerCase();
+    var rows = db.filter(function(r){
+      if (!q) return true;
+      return String(r.user).toLowerCase().indexOf(q) !== -1 || String(r.prize).toLowerCase().indexOf(q) !== -1;
+    });
+
+    if (!rows.length) {
+      box.innerHTML =
+        '<div class="empty"><strong>' + (db.length ? "Ничего не найдено" : "Пока нет ни одной ссылки") + '</strong>' +
+        (db.length ? "Попробуйте другой запрос." : "Заполните форму выше — ссылка появится здесь вместе со статусом.") + '</div>';
+      return;
+    }
+
+    var html = '<div class="table-scroll"><table><thead><tr>' +
+      '<th>Победитель</th><th>Приз</th><th>Статус</th><th>Заявка</th><th>Открыта</th><th style="text-align:right">Действия</th>' +
+      '</tr></thead><tbody>';
+
+    rows.forEach(function(r){
+      var st = statusOf(r);
+      html += '<tr' + (r.id === freshId ? ' class="fresh"' : '') + '>' +
+        '<td class="user" data-label="Победитель">@' + esc(r.user) + '</td>' +
+        '<td class="prize" data-label="Приз">' + esc(r.prize) + '<small>' + esc(kindLabel(r.kind)) + '</small></td>' +
+        '<td class="status" data-label="Статус"><span class="pill ' + st.key + '">' + st.label + '</span></td>' +
+        '<td class="mono" data-label="Заявка" style="font-size:12.5px;color:var(--muted)">' + esc(r.code) + '</td>' +
+        '<td class="when" data-label="Открыта">' + esc(fmtShort(r.openedAt)) + '</td>' +
+        '<td class="actions">' +
+          '<button class="btn" type="button" data-act="copy" data-id="' + esc(r.id) + '">Ссылка</button>' +
+          (r.issuedAt ? '' : '<button class="btn" type="button" data-act="issue" data-id="' + esc(r.id) + '">Выдан</button>') +
+          '<button class="btn danger" type="button" data-act="del" data-id="' + esc(r.id) + '" aria-label="Удалить запись">×</button>' +
+        '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    box.innerHTML = html;
+  }
+
+  function onTableClick(e) {
+    var btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    var id = btn.getAttribute("data-id");
+    var rec = null;
+    for (var i = 0; i < db.length; i++) if (db[i].id === id) rec = db[i];
+    if (!rec) return;
+
+    var act = btn.getAttribute("data-act");
+    if (act === "copy") {
+      copyText(giftLink(rec.token), function(ok){ toast(btn, ok); });
+    } else if (act === "issue") {
+      rec.issuedAt = Date.now();
+      persist();
+      renderKpis();
+      renderTable();
+    } else if (act === "del") {
+      if (!window.confirm("Удалить запись для @" + rec.user + "? Ссылка перестанет учитываться в реестре.")) return;
+      db = db.filter(function(r){ return r.id !== id; });
+      persist();
+      renderKpis();
+      renderTable();
+    }
+  }
+
+  function exportCsv() {
+    if (!db.length) return;
+    var head = ["Победитель", "Приз", "Тип", "Статус", "Заявка", "Создана", "Открыта", "Подтверждена", "Выдана"];
+    var lines = [head.join(";")];
+    db.forEach(function(r){
+      lines.push([
+        "@" + r.user,
+        r.prize,
+        kindLabel(r.kind),
+        statusOf(r).label,
+        r.code,
+        fmtDate(r.createdAt),
+        fmtDate(r.openedAt),
+        fmtDate(r.claimedAt),
+        fmtDate(r.issuedAt)
+      ].map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(";"));
+    });
+    var blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "giftdrop-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  /* ---------------- router ---------------- */
+
+  function route() {
+    var hash = location.hash || "";
+    var m = hash.match(/^#\/gift\/(.+)$/);
+    freshId = null;
+    if (m) {
+      renderGift(decodeURIComponent(m[1]));
+    } else if (hash === "#/admin") {
+      renderAdmin();
+    } else {
+      renderLanding();
+    }
+    window.scrollTo(0, 0);
+  }
+
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
